@@ -14,11 +14,11 @@ type Config struct {
 
 type PromptRepository interface {
 	SetNX(prompt entity.Prompt) bool
-	UpdateStatus(id entity.PromptID, status entity.PromptStatus) error
+	UpdateStatus(id string, status entity.PromptStatus) error
 }
 
-type Repository interface {
-	Set(promptID entity.PromptID, laptop entity.Laptop)
+type LaptopRepository interface {
+	Set(promptID string, laptop entity.Laptop)
 }
 
 type LaptopStructifyService interface {
@@ -28,22 +28,22 @@ type LaptopStructifyService interface {
 type WorkerQueue struct {
 	cfg                    Config
 	tasks                  chan Task
-	repo                   Repository
+	laptopRepo             LaptopRepository
 	promptRepo             PromptRepository
 	laptopStructifyService LaptopStructifyService
 	wg                     *sync.WaitGroup
 }
 
 type Task struct {
-	PromptID      entity.PromptID
+	PromptID      string
 	PromptContent string
 }
 
-func New(cfg Config, repo Repository, promptRepo PromptRepository, laptopStructifySvc LaptopStructifyService) WorkerQueue {
+func New(cfg Config, repo LaptopRepository, promptRepo PromptRepository, laptopStructifySvc LaptopStructifyService) WorkerQueue {
 	return WorkerQueue{
 		cfg:                    cfg,
 		tasks:                  make(chan Task, cfg.BufferSize),
-		repo:                   repo,
+		laptopRepo:             repo,
 		promptRepo:             promptRepo,
 		laptopStructifyService: laptopStructifySvc,
 		wg:                     &sync.WaitGroup{},
@@ -68,14 +68,16 @@ func (q *WorkerQueue) worker() {
 		})
 		if err != nil {
 			fmt.Printf("error structifying prompt content: %s\n", err.Error())
+			continue
 		}
 
 		err = q.promptRepo.UpdateStatus(task.PromptID, entity.PromptStatusProcessed)
 		if err != nil {
 			fmt.Printf("error updating prompt status to processed: %s\n", err.Error())
+			continue
 		}
 
-		q.repo.Set(task.PromptID, res.Laptop)
+		q.laptopRepo.Set(task.PromptID, res.Laptop)
 
 		q.wg.Done()
 	}

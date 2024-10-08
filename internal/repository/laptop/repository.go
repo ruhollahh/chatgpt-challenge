@@ -7,12 +7,12 @@ import (
 
 type Repository struct {
 	mu sync.RWMutex
-	db map[entity.PromptID]entity.Laptop
+	db map[string]entity.Laptop
 }
 
 func New() *Repository {
 	return &Repository{
-		db: make(map[entity.PromptID]entity.Laptop),
+		db: make(map[string]entity.Laptop),
 	}
 }
 
@@ -27,7 +27,7 @@ func (r *Repository) GetAll() []entity.Laptop {
 	return laptops
 }
 
-func (r *Repository) Set(promptID entity.PromptID, laptop entity.Laptop) {
+func (r *Repository) Set(promptID string, laptop entity.Laptop) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.db[promptID] = laptop

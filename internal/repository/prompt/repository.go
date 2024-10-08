@@ -8,12 +8,12 @@ import (
 
 type Repository struct {
 	mu sync.RWMutex
-	db map[entity.PromptID]entity.Prompt
+	db map[string]entity.Prompt
 }
 
 func New() *Repository {
 	return &Repository{
-		db: make(map[entity.PromptID]entity.Prompt),
+		db: make(map[string]entity.Prompt),
 	}
 }
 
@@ -24,11 +24,11 @@ func (r *Repository) GetAll() []entity.Prompt {
 	for _, p := range r.db {
 		prompts = append(prompts, p)
 	}
-	
+
 	return prompts
 }
 
-func (r *Repository) UpdateStatus(id entity.PromptID, status entity.PromptStatus) error {
+func (r *Repository) UpdateStatus(id string, status entity.PromptStatus) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

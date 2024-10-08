@@ -1,7 +1,5 @@
 package entity
 
-type PromptID [32]byte
-
 type PromptStatus string
 
 const (
@@ -10,7 +8,7 @@ const (
 )
 
 type Prompt struct {
-	ID      PromptID
+	ID      string
 	Content string
 	Status  PromptStatus
 }
