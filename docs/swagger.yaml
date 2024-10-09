@@ -1,0 +1,98 @@
+basePath: /
+definitions:
+  entity.PromptStatus:
+    enum:
+    - PENDING
+    - FAILED
+    - PROCESSED
+    type: string
+    x-enum-varnames:
+    - PromptStatusPending
+    - PromptStatusFailed
+    - PromptStatusProcessed
+  http_io.Envelope:
+    properties:
+      data: {}
+      error: {}
+    type: object
+  laptopparam.GetAllResponse:
+    properties:
+      battery_status:
+        type: string
+      brand:
+        type: string
+      model:
+        type: string
+      processor:
+        type: string
+      ram_capacity:
+        type: string
+      ram_type:
+        type: string
+      storage_capacity:
+        type: string
+    type: object
+  promptparam.GetAllResponse:
+    properties:
+      content:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/entity.PromptStatus'
+    type: object
+info:
+  contact:
+    email: ruhollahh01@gmail.com
+    name: API Support
+    url: https://www.example.com/support
+  description: This is an easy way to retrieve the generated structured data.
+  termsOfService: https://example.com/terms
+  title: ChatGPT Challenge
+  version: "1.0"
+paths:
+  /laptops:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/http_io.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/laptopparam.GetAllResponse'
+                  type: array
+                error:
+                  type: object
+              type: object
+      summary: Get a list of all laptops
+      tags:
+      - Laptops
+  /prompts:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/http_io.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/promptparam.GetAllResponse'
+                  type: array
+                error:
+                  type: object
+              type: object
+      summary: Get a list of all prompts
+      tags:
+      - Prompts
+swagger: "2.0"

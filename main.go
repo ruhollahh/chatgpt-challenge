@@ -1,42 +1,87 @@
 package main
 
 import (
+	"chatgpt-challenge/config"
+	httpserver "chatgpt-challenge/delivery/http_server"
+	_ "chatgpt-challenge/docs"
 	openaiclient "chatgpt-challenge/internal/client/openai"
 	laptoprepo "chatgpt-challenge/internal/repository/laptop"
 	promptrepo "chatgpt-challenge/internal/repository/prompt"
-	laptopstructify "chatgpt-challenge/internal/service/structify/laptop"
+	"chatgpt-challenge/internal/service/laptop"
+	promptservice "chatgpt-challenge/internal/service/prompt"
 	laptopworkerqueue "chatgpt-challenge/internal/service/workerqueue/laptop"
-	"crypto/sha256"
-	"encoding/base32"
-	"fmt"
+	laptopschema "chatgpt-challenge/schema/laptop"
 	"github.com/sashabaranov/go-openai"
+	"log"
 	"os"
 )
 
 const laptopSchemaSystemMessage = "You are an expert in structured data extraction. You will be provided with unstructured text describing a laptop and you should convert it into the specified structure. Fill in any required missing information using accurate data and disregard any extra details."
 
+// @title ChatGPT Challenge
+// @version 1.0
+// @description This is an easy way to retrieve the generated structured data.
+// @termsOfService https://example.com/terms
+
+// @contact.name API Support
+// @contact.url https://www.example.com/support
+// @contact.email ruhollahh01@gmail.com
+
+// @BasePath /
 func main() {
 	authToken := os.Getenv("CHATGPT_CHALLENGE__AUTH_TOKEN")
 
-	openAiClient := openaiclient.New(openaiclient.Config{
-		AuthToken:            authToken,
-		Model:                openai.GPT4oMini,
-		MaxCompletionsTokens: 60,
-	})
-	laptopStructifySvc := laptopstructify.New(laptopstructify.Config{
-		SystemMessage: laptopSchemaSystemMessage,
-	}, openAiClient)
+	cfg := config.Config{
+		HTTPServer: httpserver.Config{
+			Port: 1414,
+		},
+		OpenAIClient: openaiclient.Config{
+			AuthToken:            authToken,
+			Model:                openai.GPT4oMini,
+			MaxCompletionsTokens: 60,
+		},
+		LaptopService: laptopservice.Config{
+			SystemMessage: laptopSchemaSystemMessage,
+		},
+		LaptopWorkerQueue: laptopworkerqueue.Config{
+			BufferSize: 5,
+			Workers:    3,
+		},
+	}
+
+	openAIClient := openaiclient.New(cfg.OpenAIClient)
 
 	promptRepo := promptrepo.New()
 	laptopRepo := laptoprepo.New()
 
-	startLaptopWorkerQueue(laptopRepo, promptRepo, laptopStructifySvc)
+	promptSvc := promptservice.New(promptRepo)
+	laptopSvc := laptopservice.New(
+		cfg.LaptopService,
+		laptopRepo,
+		openAIClient,
+		laptopschema.New(),
+	)
 
-	fmt.Printf("Prompts: %+v\n", promptRepo.GetAll())
-	fmt.Printf("Laptops: %+v\n", laptopRepo.GetAll())
+	laptopWorkerQueue := laptopworkerqueue.New(
+		cfg.LaptopWorkerQueue,
+		promptSvc,
+		laptopSvc,
+	)
+
+	go startLaptopWorkerQueue(laptopWorkerQueue)
+
+	httpServerConfig := httpserver.Config{Port: 1414}
+	server := httpserver.New(httpServerConfig, promptSvc, laptopSvc)
+	server.RegisterRoutes()
+
+	log.Println("starting server", "port", httpServerConfig.Port)
+	err := server.ListenAndServe()
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 }
 
-func startLaptopWorkerQueue(laptopRepo laptopworkerqueue.LaptopRepository, promptRepo laptopworkerqueue.PromptRepository, laptopStructifySvc laptopworkerqueue.LaptopStructifyService) {
+func startLaptopWorkerQueue(workerQueue laptopworkerqueue.WorkerQueue) {
 	prompts := []string{
 		"Laptop: Dell Inspiron; Processor i7-10510U ; RAM 16GB; 512GB SSD Missing battery",
 		"MacBook Pro with M1 chip, 8GB RAM, 256 GB SSD storage Battery removed",
@@ -50,24 +95,11 @@ func startLaptopWorkerQueue(laptopRepo laptopworkerqueue.LaptopRepository, promp
 		"Dell Inspiron; Processor: i5-1135G7; RAM 8GB; Storage: 256.123548 SSD; Missing charger",
 	}
 
-	laptopWorkerQueue := laptopworkerqueue.New(
-		laptopworkerqueue.Config{
-			BufferSize: 5,
-			Workers:    3,
-		},
-		laptopRepo,
-		promptRepo,
-		laptopStructifySvc,
-	)
-
-	laptopWorkerQueue.Start()
-	defer laptopWorkerQueue.GracefullyStop()
+	workerQueue.Start()
+	defer workerQueue.GracefullyStop()
 
 	for _, prompt := range prompts {
-		hashedPrompt := sha256.Sum256([]byte(prompt))
-		promptID := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(hashedPrompt[:])
-		laptopWorkerQueue.Enqueue(laptopworkerqueue.Task{
-			PromptID:      promptID,
+		workerQueue.Enqueue(laptopworkerqueue.Task{
 			PromptContent: prompt,
 		})
 	}
