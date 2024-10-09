@@ -1,5 +1,7 @@
 package entity
 
+// Laptop has struct tags to provide metadata used for generating schema definitions
+// for OpenAI's Structured Output API.
 type Laptop struct {
 	Brand           string `json:"brand" required:"true" description:"Laptop brand name, example: Dell"`
 	Model           string `json:"model" required:"true" description:"Laptop model name, example: Inspiron"`

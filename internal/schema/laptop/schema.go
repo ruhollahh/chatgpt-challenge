@@ -17,9 +17,7 @@ type Schema struct {
 	definition  *jsonschema.Definition
 }
 
-// New creates a new Schema instance for the Laptop entity.
-// It generates a JSON schema definition based on the Laptop entity structure.
-// The method also sets the allowed values for the "battery_status" field to "Yes" or "No".
+// New generates a JSON schema definition based on the Laptop entity structure.
 // If schema generation fails, it logs the error and terminates the application.
 func New() Schema {
 	definition, err := jsonschema.GenerateSchemaForType(&entity.Laptop{})
@@ -38,15 +36,13 @@ func New() Schema {
 	}
 }
 
-// MarshalJSON marshals the Schema definition into a JSON format.
-// The output of this function is what we send to the OpenAI API
-// to establish a schema for it's structured output.
+// MarshalJSON outputs the JSON serialized version of the schema.
+// we send this to the OpenAI's structured output API.
 func (s Schema) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.definition)
 }
 
-// ParseContent is used to unmarshal the JSON output of the OpenAI API into a Laptop entity.
-// It uses the Schema's definition to validate and extract fields from the content.
+// ParseContent is used to unmarshal the JSON output of the OpenAI's API into a Laptop entity.
 func (s Schema) ParseContent(content string) (entity.Laptop, error) {
 	laptop := entity.Laptop{}
 	err := s.definition.Unmarshal(content, &laptop)

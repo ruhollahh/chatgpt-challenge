@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// wrappedWriter is a custom ResponseWriter that captures the HTTP status code
-// of the response in addition to the standard ResponseWriter functionality.
+// wrappedWriter is a custom http.ResponseWriter that captures the HTTP status code
+// in addition to providing the standard ResponseWriter functionality.
 type wrappedWriter struct {
 	http.ResponseWriter
 	status int
