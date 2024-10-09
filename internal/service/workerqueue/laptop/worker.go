@@ -7,6 +7,9 @@ import (
 	"log"
 )
 
+// worker is a background worker function that processes tasks from the queue.
+// It attempts to structify the prompt content into a laptop entity and update the status
+// of the task accordingly.
 func (q *WorkerQueue) worker() {
 	for task := range q.tasks {
 		res, err := q.laptopService.Structify(laptopparam.StructifyRequest{

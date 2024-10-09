@@ -6,6 +6,8 @@ import (
 	"sync"
 )
 
+// Config contains the configuration settings for the WorkerQueue system, including the buffer size
+// for the task channel and the number of worker goroutines to spawn.
 type Config struct {
 	BufferSize int
 	Workers    int
@@ -24,6 +26,7 @@ type LaptopService interface {
 	Structify(laptopparam.StructifyRequest) (laptopparam.StructifyResponse, error)
 }
 
+// WorkerQueue manages the task queue and workers for processing prompts and structuring them into laptop entities.
 type WorkerQueue struct {
 	cfg           Config
 	tasks         chan Task
@@ -32,6 +35,7 @@ type WorkerQueue struct {
 	wg            *sync.WaitGroup
 }
 
+// Task represents a unit of work for the WorkerQueue.
 type Task struct {
 	promptID      string
 	PromptContent string
@@ -47,12 +51,14 @@ func New(cfg Config, promptService PromptService, laptopSvc LaptopService) Worke
 	}
 }
 
+// Start launches the worker goroutines based on the configured number of workers.
 func (q *WorkerQueue) Start() {
 	for i := 0; i < q.cfg.Workers; i++ {
 		go q.worker()
 	}
 }
 
+// GracefullyStop waits for all currently queued tasks to complete and then closes the task channel.
 func (q *WorkerQueue) GracefullyStop() {
 	q.wg.Wait()
 	close(q.tasks)

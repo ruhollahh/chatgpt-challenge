@@ -7,6 +7,11 @@ import (
 	"fmt"
 )
 
+// Structify processes an unstructured laptop description and converts it into a structured JSON format.
+// It uses a predefined JSON schema to validate the structure of the laptop data.
+//
+// The function first generates a structured output using the OpenAI API, then parses the structured JSON
+// into a laptop entity. If the content is not valid according to the schema, an error is returned.
 func (s Service) Structify(req laptopparam.StructifyRequest) (laptopparam.StructifyResponse, error) {
 	res, err := s.structGenerator.StructuredOutput(openaiparam.StructuredOutputRequest{
 		UnstructuredText: req.Content,

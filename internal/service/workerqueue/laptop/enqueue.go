@@ -6,6 +6,8 @@ import (
 	"encoding/base32"
 )
 
+// Enqueue adds a new task to the queue if the prompt does not already exist.
+// The prompt content is hashed to generate a unique promptID.
 func (q *WorkerQueue) Enqueue(task Task) {
 	hashedPrompt := sha256.Sum256([]byte(task.PromptContent))
 	task.promptID = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(hashedPrompt[:])

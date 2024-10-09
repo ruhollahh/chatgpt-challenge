@@ -13,6 +13,8 @@ if you don't have ```make``` installed you can just run:
 ```bash
 CHATGPT_CHALLENGE__AUTH_TOKEN=YOUR_AUTH_TOKEN go run main.go
 ```
+#### In order To interact with the APIs visit this URL:
+http://localhost:1414/swagger/index.html
 
 ### How can I run the unit tests?
 ```bash
