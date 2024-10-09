@@ -70,11 +70,10 @@ func main() {
 
 	go startLaptopWorkerQueue(laptopWorkerQueue)
 
-	httpServerConfig := httpserver.Config{Port: 1414}
-	server := httpserver.New(httpServerConfig, promptSvc, laptopSvc)
+	server := httpserver.New(cfg.HTTPServer, promptSvc, laptopSvc)
 	server.RegisterRoutes()
 
-	log.Println("starting server", "port", httpServerConfig.Port)
+	log.Println("starting server", "port", cfg.HTTPServer.Port)
 	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatalln(err.Error())
@@ -84,9 +83,6 @@ func main() {
 // startLaptopWorkerQueue starts the laptop worker queue, enqueues a list of unstructured
 // laptop descriptions for structuring, and gracefully stops the worker queue after
 // processing all the tasks.
-//
-// Parameters:
-// - workerQueue: The worker queue responsible for structuring laptop descriptions.
 func startLaptopWorkerQueue(workerQueue laptopworkerqueue.WorkerQueue) {
 	prompts := []string{
 		"Laptop: Dell Inspiron; Processor i7-10510U ; RAM 16GB; 512GB SSD Missing battery",
