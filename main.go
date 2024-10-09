@@ -16,7 +16,7 @@ import (
 	"os"
 )
 
-const laptopSchemaSystemMessage = "You are an expert in structured data extraction. You will be provided with unstructured text describing a laptop and you should convert it into the specified structure. Fill in any required missing information using accurate data and disregard any extra details."
+const laptopSchemaSystemMessage = "You are an expert in structured data extraction. You will be provided with unstructured text describing a laptop and you should convert it into the specified structure. If there are missing details in the provided unstructured text, fill in the gaps with accurate real-world data."
 
 // @title ChatGPT Challenge
 // @version 1.0
